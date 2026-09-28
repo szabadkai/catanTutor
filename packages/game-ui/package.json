@@ -1,0 +1,12 @@
+{
+  "name": "@hextutor/game-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@hextutor/shared": "workspace:*",
+    "@hextutor/game-engine": "workspace:*",
+    "react": "^19.0.0"
+  }
+}
