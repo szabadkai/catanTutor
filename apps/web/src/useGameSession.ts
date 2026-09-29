@@ -66,7 +66,7 @@ export function useGameSession() {
             (a) =>
               state.phase.startsWith('setup') ||
               state.phase === 'blocker' ||
-              (buildMode === 'road' && a.type === 'buildRoad') ||
+              (buildMode === null && state.phase === 'main' && a.type === 'buildRoad') ||
               (buildMode === 'settlement' && a.type === 'buildSettlement') ||
               (buildMode === 'city' && a.type === 'upgradeCity'),
           ),

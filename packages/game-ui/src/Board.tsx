@@ -1,4 +1,12 @@
-import { memo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import {
+  memo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+  type CSSProperties,
+} from 'react';
 import { RESOURCE_LABELS } from '@hextutor/shared';
 import type { GameCommand, GameState, Vertex } from '@hextutor/game-engine';
 import { TerrainScene } from './Terrain';
@@ -21,6 +29,7 @@ interface BoardProps {
   candidates: Candidate[];
   onSelect: (action: GameCommand) => void;
   showProbabilities: boolean;
+  children?: ReactNode;
 }
 const sameAction = (a: GameCommand | null, b: GameCommand) =>
   JSON.stringify(a) === JSON.stringify(b);
@@ -69,6 +78,7 @@ export const Board = memo(function Board({
   candidates,
   onSelect,
   showProbabilities,
+  children,
 }: BoardProps) {
   const [zoom, setZoom] = useState(1),
     [pan, setPan] = useState({ x: 0, y: 0 });
@@ -93,7 +103,7 @@ export const Board = memo(function Board({
     });
   }
   return (
-    <div className="board-stage">
+    <div className={`board-stage${children ? ' with-table-dice' : ''}`}>
       <div className="board-caption">
         <span className="live-dot" /> THE ISLAND{' '}
         <span className="board-caption-sub">Seed · {state.seed}</span>
@@ -368,15 +378,25 @@ export const Board = memo(function Board({
                 onClick={() => onSelect(action)}
                 onKeyDown={(e) => activate(e, () => onSelect(action))}
                 className="road-target"
+                style={{ '--road-color': state.players[action.playerId].color } as CSSProperties}
               >
+                <title>
+                  {state.phase === 'setup-road'
+                    ? 'Place your opening road'
+                    : 'Build road · 1 timber + 1 clay'}
+                </title>
                 <rect
-                  x={Math.min(a[0], b[0]) - 8}
-                  y={Math.min(a[1], b[1]) - 8}
-                  width={Math.abs(a[0] - b[0]) + 16}
-                  height={Math.abs(a[1] - b[1]) + 16}
+                  className="road-hit-area"
+                  x="0"
+                  y="-12"
+                  width={Math.hypot(b[0] - a[0], b[1] - a[1])}
+                  height="24"
                   fill="transparent"
+                  transform={`translate(${a[0]} ${a[1]}) rotate(${(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI})`}
                 />
                 <line
+                  className="road-preview"
+                  pointerEvents="none"
                   x1={a[0]}
                   y1={a[1]}
                   x2={b[0]}
@@ -464,9 +484,11 @@ export const Board = memo(function Board({
           </text>
         </g>
       </svg>
+      {children}
       <div className="board-legend">
         <span>
-          <i className="legend-dot" /> Available intersection
+          <i className="legend-dot" />{' '}
+          {roadActions.length ? 'Tap an edge to build a road' : 'Available intersection'}
         </span>
         <span>Drag to pan</span>
       </div>

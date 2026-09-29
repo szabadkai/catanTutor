@@ -3,6 +3,7 @@ import { RESOURCE_LABELS } from '@hextutor/shared';
 import { Icon } from './Icon';
 import { Coach } from './Coach';
 import { Hand, Players, TurnPrompt } from './GameControls';
+import { TableDice } from './TableDice';
 import type { GameController } from './useGameSession';
 export function GameTable({ game }: { game: GameController }) {
   const {
@@ -170,11 +171,20 @@ export function GameTable({ game }: { game: GameController }) {
               selected={selected}
               candidates={candidates}
               onSelect={(c) => {
-                setSelected(c);
+                if (c.type === 'buildRoad') dispatch(c);
+                else setSelected(c);
                 setError('');
               }}
               showProbabilities={settings.probabilities}
-            />
+            >
+              {!state.phase.startsWith('setup') && (
+                <TableDice
+                  state={state}
+                  canRoll={isHuman && actions.some((action) => action.type === 'rollDice')}
+                  onRoll={() => dispatch({ type: 'rollDice', playerId: state.activePlayerId })}
+                />
+              )}
+            </Board>
             <TurnPrompt
               state={state}
               selected={selected}
@@ -182,6 +192,7 @@ export function GameTable({ game }: { game: GameController }) {
               onCommand={dispatch}
               isHuman={isHuman}
               replaying={replayCursor !== null}
+              canBuildRoad={boardActions.some((action) => action.type === 'buildRoad')}
             />
           </div>
           {state.trade && (

@@ -2,7 +2,7 @@ import { RESOURCES, RESOURCE_LABELS } from '@hextutor/shared';
 import { victoryPoints, type GameCommand, type GameState } from '@hextutor/game-engine';
 import { Icon } from './Icon';
 import { ResourceArt } from '@hextutor/game-ui';
-export type BuildMode = 'road' | 'settlement' | 'city' | null;
+export type BuildMode = 'settlement' | 'city' | null;
 export function Players({ state }: { state: GameState }) {
   return (
     <div className="players-row">
@@ -86,13 +86,6 @@ export function Hand({
           {(
             [
               {
-                mode: 'road',
-                type: 'buildRoad',
-                label: 'Road',
-                cost: '1 timber · 1 clay',
-                icon: 'road',
-              },
-              {
                 mode: 'settlement',
                 type: 'buildSettlement',
                 label: 'Settlement',
@@ -111,6 +104,7 @@ export function Hand({
             <button
               key={b.mode}
               className={buildMode === b.mode ? 'selected' : ''}
+              aria-pressed={buildMode === b.mode}
               disabled={
                 !isHuman || state.phase !== 'main' || !actions.some((a) => a.type === b.type)
               }
@@ -137,6 +131,7 @@ export function TurnPrompt({
   onCommand,
   isHuman,
   replaying,
+  canBuildRoad,
 }: {
   state: GameState;
   selected: GameCommand | null;
@@ -144,6 +139,7 @@ export function TurnPrompt({
   onCommand: (command: GameCommand) => void;
   isHuman: boolean;
   replaying: boolean;
+  canBuildRoad: boolean;
 }) {
   const setup = state.phase.startsWith('setup'),
     road = state.phase === 'setup-road';
@@ -158,13 +154,15 @@ export function TurnPrompt({
         : 'Make your next move count.';
   let text = setup
     ? road
-      ? 'Choose one of the highlighted roads.'
+      ? 'Tap a highlighted edge to place your road.'
       : 'Select an open intersection to explore its potential.'
     : state.phase === 'roll'
-      ? 'Roll the dice to gather resources across the island.'
+      ? 'Tap the dice on the island to gather resources.'
       : state.phase === 'blocker'
         ? 'The warden blocks production and takes one card from an adjacent opponent.'
-        : 'Build, trade, or save your resources for the next turn.';
+        : canBuildRoad
+          ? 'Tap a highlighted edge to build a road. Each costs 1 timber + 1 clay.'
+          : 'Build, trade, or save your resources for the next turn.';
   if (!isHuman) {
     title = `${state.players[state.activePlayerId].name} is thinking…`;
     text = 'Watch how the island changes. Your next turn is on its way.';
@@ -205,13 +203,7 @@ export function TurnPrompt({
             <Icon name="arrow" size={17} />
           </button>
         ) : state.phase === 'roll' ? (
-          <button
-            className="primary"
-            onClick={() => onCommand({ type: 'rollDice', playerId: state.activePlayerId })}
-          >
-            <Icon name="dice" size={18} />
-            Roll dice
-          </button>
+          <span className="waiting-label">TAP THE DICE</span>
         ) : state.phase === 'main' ? (
           <button
             className="primary"

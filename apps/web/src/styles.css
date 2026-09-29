@@ -589,9 +589,123 @@ svg {
 .vertex-target.selected circle:nth-child(2) {
   filter: drop-shadow(0 0 5px #fffaf0);
 }
-.road-target:hover line {
-  stroke: #fffbe6;
+.road-target:hover .road-preview,
+.road-target:focus-visible .road-preview {
+  stroke: var(--road-color, #fffbe6);
+  stroke-width: 9;
   stroke-dasharray: none;
+  filter: drop-shadow(0 0 2px #fffbe6);
+}
+.road-hit-area {
+  pointer-events: all;
+}
+.table-dice {
+  position: absolute;
+  bottom: 46px;
+  left: 20px;
+  text-align: center;
+}
+.dice-roll {
+  display: grid;
+  justify-items: center;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.dice-roll:focus-visible {
+  outline: 2px solid #fff0c6;
+  outline-offset: 4px;
+}
+.dice-pair {
+  display: flex;
+  gap: 10px;
+  padding: 5px;
+}
+.table-die {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  width: 42px;
+  height: 42px;
+  padding: 8px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #fffdf0, #e5c78d);
+  box-shadow:
+    0 4px 0 #aa885a,
+    0 8px 12px #071d2f66;
+  transform: rotate(-12deg);
+  transition: transform 180ms;
+}
+.table-die:nth-child(2) {
+  transform: rotate(13deg) translateY(2px);
+}
+.pip {
+  border-radius: 50%;
+}
+.pip.visible {
+  background: #29464a;
+  box-shadow: inset 0 1px 1px #071d2f66;
+}
+.dice-caption {
+  display: block;
+  margin-top: 10px;
+  color: #fff0c6;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+.dice-roll:hover .table-die,
+.dice-roll:focus-visible .table-die {
+  transform: translateY(-5px) rotate(-5deg);
+}
+.dice-roll:hover .table-die:nth-child(2),
+.dice-roll:focus-visible .table-die:nth-child(2) {
+  transform: translateY(-3px) rotate(20deg);
+}
+.dice-landed .dice-pair {
+  animation: dice-tumble 450ms ease-out;
+}
+.dice-waiting {
+  opacity: 0.65;
+}
+@keyframes dice-tumble {
+  0% {
+    transform: translateY(-16px) rotate(-18deg);
+  }
+  40% {
+    transform: translateY(2px) rotate(12deg);
+  }
+  70% {
+    transform: translateY(-5px) rotate(-6deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+@media (max-width: 600px) {
+  .board-stage.with-table-dice {
+    padding-bottom: 86px;
+  }
+  .with-table-dice .board-legend {
+    display: none;
+  }
+  .table-dice {
+    left: 8px;
+    bottom: 12px;
+  }
+  .table-die {
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    gap: 2px;
+    border-radius: 6px;
+  }
+  .dice-pair {
+    gap: 7px;
+  }
+  .dice-caption {
+    font-size: 8px;
+  }
 }
 .hex-target:hover .tile-landscape {
   filter: brightness(1.07);

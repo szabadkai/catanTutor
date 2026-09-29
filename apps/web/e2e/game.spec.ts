@@ -20,7 +20,6 @@ test('opening coach, placement, bots, persistence and replay form a usable game'
     .getByRole('button', { name: /Build road edge:/ })
     .first()
     .press('Enter');
-  await page.getByRole('button', { name: 'Build road', exact: true }).click();
   await expect(page.getByRole('button', { name: /Select settlement/ }).first()).toBeVisible({
     timeout: 20000,
   });
@@ -33,11 +32,12 @@ test('opening coach, placement, bots, persistence and replay form a usable game'
     .getByRole('button', { name: /Build road edge:/ })
     .first()
     .click();
-  await page.getByRole('button', { name: 'Build road', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Roll dice', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Roll dice', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Roll dice', exact: true }).click();
+  await page.getByRole('button', { name: 'Roll dice', exact: true }).press('Space');
+  await expect(page.getByRole('button', { name: 'Roll dice', exact: true })).toHaveCount(0);
+  await expect(page.locator('.table-dice')).toContainText('Rolled');
   const warden = page.getByRole('button', { name: /Move warden to/ });
   if (await warden.count()) {
     await warden.first().click();
@@ -131,4 +131,52 @@ test('city construction works from a naturally reached, replayed position', asyn
     `${points + 1}/10`,
   );
   await expect(page.getByRole('button', { name: 'End turn', exact: true })).toBeVisible();
+});
+
+test('affordable roads build directly on the island and remain read-only in replay', async ({
+  page,
+}) => {
+  const engine = await import('@hextutor/game-engine');
+  const ai = await import('@hextutor/game-ai');
+  let state = engine.createGame('browser-road');
+  for (let i = 0; i < 2000; i++) {
+    const actions = engine.legalActions(state);
+    if (
+      state.activePlayerId === 'you' &&
+      state.phase === 'main' &&
+      actions.some((a) => a.type === 'buildRoad')
+    )
+      break;
+    if (state.winner) throw new Error('Fixture ended before a road opportunity');
+    state = engine.execute(state, ai.chooseHeuristicAction(state, actions));
+  }
+  const road = engine.legalActions(state).find((action) => action.type === 'buildRoad');
+  if (!road || road.type !== 'buildRoad') throw new Error('No road opportunity');
+  const replay = engine.exportReplay(state);
+  await page.addInitScript(
+    (data) =>
+      localStorage.setItem('hextutor.session.v1', JSON.stringify({ replay: data, records: [] })),
+    replay,
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: `Build road ${road.edgeId}`, exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: `Build road ${road.edgeId}`, exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator('.resource-card.wood strong')).toHaveText(
+    String(state.players.you.resources.wood - 1),
+  );
+  await expect(page.locator('.resource-card.brick strong')).toHaveText(
+    String(state.players.you.resources.brick - 1),
+  );
+  await expect(page.getByRole('button', { name: 'Build road', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Replays', exact: true }).click();
+  await page.getByRole('button', { name: 'Watch replay' }).click();
+  await page.getByRole('button', { name: 'Last move', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Build road edge:/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Roll dice', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Return to live' }).click();
+  await expect(page.locator('.resource-card.wood strong')).toHaveText(
+    String(state.players.you.resources.wood - 1),
+  );
 });
